@@ -1,0 +1,73 @@
+
+services:
+  db:
+    image: postgres
+    container_name: test_postgres2
+    networks:
+      dbnetwork:
+          ipv4_address: 192.168.1.5
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD= password
+      - POSTGRES_DB= testdb2
+    volumes:
+      - /home/vntchang/test_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+    # ports:
+    #     - "5432:5432" 
+
+  webserver:
+    build: ./hruserauth/
+    container_name: userauth_service
+    networks:
+      - dbnetwork
+      - bridge2
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+        - "3000:3000"
+
+  graphql_server:
+    build: ./hrGraphql/
+    container_name: hrgraphql
+    networks:
+      - dbnetwork
+      - bridge2
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "7000:7000"
+
+  racetrack_maker_server:
+    build: ./racetrack_maker/
+    container_name: racetrack_maker
+    networks:
+      - bridge2
+    ports:
+      - ${RB_PORT}:${RB_PORT}
+
+  personal_site_server:
+    build: ./personal_site/
+    container_name: personal_site
+    networks:
+      - bridge2
+    ports:
+      - ${PS_PORT}:${PS_PORT}
+    
+  
+networks:
+  dbnetwork:
+    name: dbnetwork
+    ipam:
+      config:
+        - subnet: 192.168.1.0/24
+    internal: true
+  bridge2:
+    name: bridge2
