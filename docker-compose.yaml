@@ -21,9 +21,12 @@ services:
     # ports:
     #     - "5432:5432" 
 
-  webserver:
-    build: ./hruserauth/
-    container_name: userauth_service
+  user_auth_server:
+    build: 
+      context: ./hruserauth/
+      args:
+        - PORT=${UA_PORT}
+    container_name: user_auth_server
     networks:
       - dbnetwork
       - bridge2
@@ -31,11 +34,14 @@ services:
       db:
         condition: service_healthy
     ports:
-        - "3000:3000"
+        - ${UA_PORT}:${UA_PORT}
 
   graphql_server:
-    build: ./hrGraphql/
-    container_name: hrgraphql
+    build: 
+      context: ./hrGraphql/
+      args:
+        - PORT=${GQL_PORT}
+    container_name: graphql_server
     networks:
       - dbnetwork
       - bridge2
@@ -43,18 +49,22 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "7000:7000"
+      - ${GQL_PORT}:${GQL_PORT}
 
   racetrack_maker_server:
-    build: ./racetrack_maker/
+    build:
+      context: ./racetrack_maker/
     container_name: racetrack_maker
     networks:
       - bridge2
     ports:
-      - ${RB_PORT}:${RB_PORT}
+      - ${RM_PORT}:${RM_PORT}
 
   personal_site_server:
-    build: ./personal_site/
+    build: 
+      context: ./personal_site/
+      args:
+        - PORT=${PS_PORT}
     container_name: personal_site
     networks:
       - bridge2
